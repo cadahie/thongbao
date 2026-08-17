@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thông báo iOS PWA</title>
+  <title>App Notification Demo</title>
 
-  <!-- Cấu hình Manifest trực tiếp (PWA) -->
-  <link rel="manifest" href='data:application/json,{"name":"ThongBaoApp","short_name":"ThongBao","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#007aff","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1827/1827504.png","sizes":"192x192","type":"image/png"}]}'>
+  <!-- Cấu hình Manifest cho PWA iOS -->
+  <link rel="manifest" href='data:application/json,{"name":"AppThongBao","short_name":"ThongBao","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#007aff","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1827/1827504.png","sizes":"192x192","type":"image/png"}]}'>
+
+  <!-- Tích hợp OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "33007f12-79f1-4b3b-919e-ee08f6bb4d1f",
+      });
+    });
+  </script>
 
   <style>
     body {
@@ -28,76 +39,23 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       max-width: 320px;
     }
-    button {
-      padding: 14px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      color: white;
-      background-color: #007aff;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 15px;
+    h2 {
+      margin-top: 0;
+      color: #1c1c1e;
     }
-    button:active {
-      opacity: 0.8;
+    p {
+      color: #8e8e93;
+      font-size: 14px;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>Thử nghiệm Thông báo</h2>
-    <p>Nhấn nút bên dưới để cấp quyền và nhận thông báo.</p>
-    <button onclick="kichHoatThongBao()">Bật & Gửi thông báo</button>
+    <h2>Nhận thông báo Push</h2>
+    <p>Trang web sẽ tự động xin quyền. Khi chấp nhận, bạn sẽ nhận được thông báo ngay cả khi đã đóng ứng dụng.</p>
   </div>
-
-  <script>
-    // 1. Tự động khởi tạo Service Worker chạy ngầm bằng Data URL
-    if ('serviceWorker' in navigator) {
-      const swCode = `
-        self.addEventListener('install', e => self.skipWaiting());
-        self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-      `;
-      const blob = new Blob([swCode], { type: 'application/javascript' });
-      const swUrl = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Error:', err));
-    }
-
-    // 2. Hàm kích hoạt thông báo tương thích iOS & Android
-    async function kichHoatThongBao() {
-      // Kiểm tra API Notification
-      if (!("Notification" in window)) {
-        alert("Lưu ý: Để chạy trên iPhone, bạn hãy đẩy code lên Vercel/GitHub Pages, sau đó dùng Safari bấm 'Chia sẻ' -> 'Thêm vào MH chính' (Add to Home Screen) rồi mới mở ứng dụng lên thử nhé!");
-        return;
-      }
-
-      // Yêu cầu cấp quyền
-      let permission = Notification.permission;
-      if (permission === "default") {
-        permission = await Notification.requestPermission();
-      }
-
-      if (permission === "granted") {
-        // Kiểm tra Service Worker để phát thông báo
-        if ('serviceWorker' in navigator) {
-          const reg = await navigator.serviceWorker.ready;
-          reg.showNotification("Thông báo từ Web!", {
-            body: "Chúc mừng! Tính năng thông báo đã hoạt động thành công.",
-            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png"
-          });
-        } else {
-          new Notification("Thông báo từ Web!", {
-            body: "Chúc mừng! Tính năng thông báo đã hoạt động thành công.",
-            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png"
-          });
-        }
-      } else {
-        alert("Bạn đã từ chối quyền thông báo trên trình duyệt!");
-      }
-    }
-  </script>
 
 </body>
 </html>
