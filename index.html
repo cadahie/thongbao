@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App Notification Demo</title>
 
-  <!-- Cấu hình Manifest cho PWA iOS -->
-  <link rel="manifest" href='data:application/json,{"name":"AppThongBao","short_name":"ThongBao","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#007aff","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1827/1827504.png","sizes":"192x192","type":"image/png"}]}'>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ThongBao">
 
-  <!-- Tích hợp OneSignal SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -17,6 +18,12 @@
         appId: "33007f12-79f1-4b3b-919e-ee08f6bb4d1f",
       });
     });
+
+    function kichHoatPermission() {
+      window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.Notifications.requestPermission();
+      });
+    }
   </script>
 
   <style>
@@ -39,14 +46,20 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       max-width: 320px;
     }
-    h2 {
-      margin-top: 0;
-      color: #1c1c1e;
+    button {
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background-color: #007aff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
     }
-    p {
-      color: #8e8e93;
-      font-size: 14px;
-      line-height: 1.5;
+    button:active {
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -54,7 +67,8 @@
 
   <div class="card">
     <h2>Nhận thông báo Push</h2>
-    <p>Trang web sẽ tự động xin quyền. Khi chấp nhận, bạn sẽ nhận được thông báo ngay cả khi đã đóng ứng dụng.</p>
+    <p>Nhấn nút bên dưới để cấp quyền nhận thông báo cho ứng dụng.</p>
+    <button onclick="kichHoatPermission()">Bật thông báo ngay</button>
   </div>
 
 </body>
