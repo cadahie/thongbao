@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>App Notification Demo</title>
+  <title>Thông Báo Giả</title>
 
-  <!-- Thẻ bắt buộc để ẩn Safari trên iOS PWA -->
+  <!-- Thẻ ẩn thanh công cụ Safari trên iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ThongBao">
@@ -15,52 +15,6 @@
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1827/1827504.png">
   <link rel="manifest" href='data:application/manifest+json,{"name":"ThongBao","short_name":"ThongBao","start_url":".","display":"standalone","background_color":"#000000","theme_color":"#000000"}'>
 
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "33007f12-79f1-4b3b-919e-ee08f6bb4d1f",
-      });
-    });
-
-    // Hàm phát thông báo bằng Service Worker gốc
-    async function phatThongBao(title, message) {
-      if ('serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.ready;
-        reg.showNotification(title, {
-          body: message,
-          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png"
-        });
-      } else {
-        new Notification(title, { body: message });
-      }
-    }
-
-    // 1. Gửi 10 thông báo (1s/lần)
-    function gui10ThongBao() {
-      let count = 1;
-      phatThongBao("Thông báo đếm số", `Lần gửi thứ ${count}/10`);
-
-      const timer = setInterval(() => {
-        count++;
-        if (count <= 10) {
-          phatThongBao("Thông báo đếm số", `Lần gửi thứ ${count}/10`);
-        } else {
-          clearInterval(timer);
-        }
-      }, 1000);
-    }
-
-    // 2. Hẹn giờ 3 giây
-    function henGio3Giay() {
-      phatThongBao("Hệ thống", "3 giây sau sẽ có thông báo...");
-      setTimeout(() => {
-        phatThongBao("Thử thành công", "Thử thành công!");
-      }, 3000);
-    }
-  </script>
-
   <style>
     :root {
       --bg-color: #000000;
@@ -68,8 +22,8 @@
       --card-border: rgba(255, 255, 255, 0.12);
       --text-main: #ffffff;
       --text-sub: rgba(255, 255, 255, 0.6);
-      --accent-green: #30d158;
       --accent-blue: #0a84ff;
+      --accent-red: #ff453a;
     }
 
     * {
@@ -166,20 +120,100 @@
       color: var(--text-sub);
     }
 
+    .form-section {
+      margin-bottom: 18px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .app-selector {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .app-card {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .app-card span {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .app-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(10, 132, 255, 0.2);
+    }
+
+    .app-card.selected span {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .input-group {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      margin-bottom: 10px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .input-group input {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 15px;
+      padding: 4px 0;
+      outline: none;
+      user-select: text;
+    }
+
+    .row-inputs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row-inputs .input-group {
+      flex: 1;
+    }
+
     .btn {
       width: 100%;
-      padding: 16px;
-      border-radius: 14px;
+      padding: 14px;
+      border-radius: 12px;
       font-size: 15px;
       font-weight: 600;
       border: none;
       cursor: pointer;
-      margin-top: 12px;
-      color: white;
+      margin-top: 6px;
     }
 
-    .btn-10s { background-color: var(--accent-green); }
-    .btn-3s { background-color: var(--accent-blue); }
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-danger { background: rgba(255, 69, 58, 0.2); color: var(--accent-red); border: 1px solid rgba(255, 69, 58, 0.3); }
   </style>
 </head>
 <body>
@@ -190,24 +224,71 @@
       <button class="seal-btn" onclick="toggleMenu()">🦭</button>
     </div>
 
-    <!-- VIEW 1: Menu Trang Chủ -->
+    <!-- VIEW 1: Menu -->
     <div class="view-content menu-view active" id="menuView">
       <div class="add-btn-large" onclick="openStudio()">+</div>
-      <div class="menu-hint">Bấm + để vào bảng điều khiển</div>
+      <div class="menu-hint">Tạo thông báo giả mới</div>
     </div>
 
-    <!-- VIEW 2: Bảng Điều Khiển Gốc -->
+    <!-- VIEW 2: Cấu hình -->
     <div class="view-content" id="studioView">
-      <p style="color: var(--text-sub); font-size: 14px;">Chọn tính năng bạn muốn thử nghiệm bên dưới:</p>
       
-      <button class="btn btn-10s" onclick="gui10ThongBao()">Gửi 10 thông báo (1s/lần)</button>
-      <button class="btn btn-3s" onclick="henGio3Giay()">Hẹn giờ thông báo 3 giây</button>
+      <div class="form-section">
+        <div class="section-label">Tên ứng dụng hiển thị</div>
+        <div class="app-selector">
+          <div class="app-card selected" onclick="selectApp(this, 'Facebook')"><span>Facebook</span></div>
+          <div class="app-card" onclick="selectApp(this, 'Messenger')"><span>Messenger</span></div>
+          <div class="app-card" onclick="selectApp(this, 'Instagram')"><span>Instagram</span></div>
+          <div class="app-card" onclick="selectApp(this, 'TikTok')"><span>TikTok</span></div>
+          <div class="app-card" onclick="selectApp(this, 'Zalo')"><span>Zalo</span></div>
+          <div class="app-card" onclick="selectApp(this, 'Discord')"><span>Discord</span></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Nội dung hiển thị</div>
+        <div class="input-group">
+          <label>Tên người gửi / Tiêu đề</label>
+          <input type="text" id="senderInput" value="Crush">
+        </div>
+        <div class="input-group">
+          <label>Nội dung tin nhắn</label>
+          <input type="text" id="msgInput" value="Tối nay rảnh không, đi chơi nha! ❤️">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Tần suất & Số lượng</div>
+        <div class="row-inputs">
+          <div class="input-group">
+            <label>Tổng số lượt</label>
+            <input type="number" id="countInput" value="3" min="1">
+          </div>
+          <div class="input-group">
+            <label>Giãn cách (Giây)</label>
+            <input type="number" id="intervalInput" value="2" min="0.5" step="0.5">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="startFakeNotification()">Bắt đầu gửi</button>
+      <button class="btn btn-danger" onclick="stopNotification()">Dừng lại</button>
+
     </div>
   </div>
 
   <script>
     // Chống Safari nhảy tab PWA
     (function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^http/;a.addEventListener("click",function(a){d=a.target;while(d.nodeName!=="A"&&d.nodeName!=="BODY")d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone");
+
+    let selectedAppName = 'Facebook';
+    let timerId = null;
+
+    function selectApp(element, appName) {
+      document.querySelectorAll('.app-card').forEach(card => card.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedAppName = appName;
+    }
 
     function toggleMenu() {
       const menuView = document.getElementById('menuView');
@@ -223,7 +304,62 @@
     function openStudio() {
       document.getElementById('menuView').classList.remove('active');
       document.getElementById('studioView').classList.add('active');
-      document.getElementById('pageTitle').innerText = 'Điều khiển Thông báo';
+      document.getElementById('pageTitle').innerText = 'Thông Báo Giả';
+    }
+
+    async function requestPermission() {
+      if ('Notification' in window) {
+        const perm = await Notification.requestPermission();
+        return perm === 'granted';
+      }
+      return false;
+    }
+
+    // Phát thông báo KHÔNG chứa icon
+    function sendNotification(title, body) {
+      new Notification(title, { body });
+    }
+
+    async function startFakeNotification() {
+      const hasPerm = await requestPermission();
+      if (!hasPerm) {
+        alert("Bạn chưa cấp quyền Thông báo cho ứng dụng!");
+        return;
+      }
+
+      const sender = document.getElementById('senderInput').value.trim() || selectedAppName;
+      const message = document.getElementById('msgInput').value.trim() || 'Bạn có thông báo mới';
+      const totalCount = parseInt(document.getElementById('countInput').value) || 1;
+      const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
+
+      // Tiêu đề dạng: "Messenger • Crush"
+      const title = `${selectedAppName} • ${sender}`;
+
+      if (timerId) clearInterval(timerId);
+
+      let currentCount = 0;
+      sendNotification(title, message);
+      currentCount++;
+
+      if (totalCount > 1) {
+        timerId = setInterval(() => {
+          if (currentCount < totalCount) {
+            sendNotification(title, message);
+            currentCount++;
+          } else {
+            clearInterval(timerId);
+            timerId = null;
+          }
+        }, intervalSec * 1000);
+      }
+    }
+
+    function stopNotification() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+        alert('Đã dừng tiến trình!');
+      }
     }
   </script>
 </body>
