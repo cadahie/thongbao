@@ -5,18 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Thông Báo Giả</title>
 
-  <!-- Đấu nối PWA Toàn màn hình ẩn thanh Safari cho iOS & Android -->
+  <!-- Thẻ bắt buộc để ẩn Safari trên iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ThongBao">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#000000">
 
-  <!-- Icon App khi ra Màn hình chính -->
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1827/1827504.png">
-  
-  <!-- Manifest nhúng trực tiếp dạng Data URI để tránh lỗi file rời -->
-  <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRoxI25nIEIjeDEwIEdp4bqjIiwKICAic2hvcnRfbmFtZSI6ICJUaG9uZ0JhbyIsCiAgInN0YXJ0X3VybCI6ICIvIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIKfQ==">
+  <!-- Manifest độc lập inline -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"ThongBao","short_name":"ThongBao","start_url":".","display":"standalone","background_color":"#000000","theme_color":"#000000"}'>
 
   <style>
     :root {
@@ -32,84 +29,63 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      overflow: hidden;
     }
 
     body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow-x: hidden;
-      /* Tránh tai thỏ & thanh Home iOS che khuất */
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    .bg-glow {
-      position: fixed;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(10, 132, 255, 0.15) 0%, rgba(0,0,0,0) 70%);
-      top: 20%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 0;
     }
 
     .app-container {
       position: relative;
       width: 100%;
-      max-width: 400px;
-      height: 100vh;
-      max-height: 844px;
-      background: rgba(18, 18, 20, 0.85);
+      height: 100%;
+      max-width: 430px;
+      max-height: 932px;
+      background: rgba(18, 18, 20, 0.95);
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 28px;
-      border: 1px solid var(--card-border);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      z-index: 1;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
     }
 
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .app-title {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.5px;
+      font-size: 20px;
+      font-weight: 700;
     }
 
     .seal-btn {
-      font-size: 24px;
+      font-size: 26px;
       background: none;
       border: none;
       cursor: pointer;
-      padding: 4px;
-      transition: transform 0.2s;
-    }
-
-    .seal-btn:active {
-      transform: scale(0.9);
     }
 
     .view-content {
       flex: 1;
-      padding: 20px 24px;
+      padding: 20px;
       overflow-y: auto;
       display: none;
       flex-direction: column;
@@ -125,55 +101,43 @@
     }
 
     .add-btn-large {
-      width: 80px;
-      height: 80px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       color: var(--accent-blue);
-      font-size: 36px;
+      font-size: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
-
-    .add-btn-large:active {
-      transform: scale(0.92);
-      background: rgba(255, 255, 255, 0.15);
     }
 
     .menu-hint {
-      margin-top: 16px;
+      margin-top: 14px;
       font-size: 14px;
       color: var(--text-sub);
     }
 
     .form-section {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .section-label {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: var(--text-sub);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       font-weight: 600;
     }
 
     .app-selector {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       overflow-x: auto;
-      padding-bottom: 8px;
-      scrollbar-width: none;
-    }
-
-    .app-selector::-webkit-scrollbar {
-      display: none;
+      padding-bottom: 6px;
     }
 
     .app-card {
@@ -181,31 +145,28 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px 14px;
+      padding: 10px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: 14px;
       cursor: pointer;
-      width: 72px;
-      transition: all 0.2s ease;
+      width: 68px;
     }
 
-    .app-card img {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      margin-bottom: 6px;
+    .app-card svg {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 4px;
     }
 
     .app-card span {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-sub);
-      white-space: nowrap;
     }
 
     .app-card.selected {
       border-color: var(--accent-blue);
-      background: rgba(10, 132, 255, 0.15);
+      background: rgba(10, 132, 255, 0.2);
     }
 
     .app-card.selected span {
@@ -216,16 +177,15 @@
     .input-group {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 4px 14px;
-      margin-bottom: 12px;
+      border-radius: 12px;
+      padding: 6px 12px;
+      margin-bottom: 10px;
     }
 
     .input-group label {
       display: block;
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-sub);
-      margin-top: 6px;
     }
 
     .input-group input {
@@ -234,13 +194,14 @@
       border: none;
       color: var(--text-main);
       font-size: 15px;
-      padding: 6px 0 8px 0;
+      padding: 4px 0;
       outline: none;
+      user-select: text;
     }
 
     .row-inputs {
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
 
     .row-inputs .input-group {
@@ -250,39 +211,24 @@
     .btn {
       width: 100%;
       padding: 14px;
-      border-radius: 14px;
+      border-radius: 12px;
       font-size: 15px;
       font-weight: 600;
       border: none;
       cursor: pointer;
-      margin-top: 8px;
-      transition: opacity 0.2s;
+      margin-top: 6px;
     }
 
-    .btn-primary {
-      background-color: var(--accent-blue);
-      color: white;
-    }
-
-    .btn-danger {
-      background-color: rgba(255, 69, 58, 0.2);
-      color: var(--accent-red);
-      border: 1px solid rgba(255, 69, 58, 0.3);
-    }
-
-    .btn:active {
-      opacity: 0.7;
-    }
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-danger { background: rgba(255, 69, 58, 0.2); color: var(--accent-red); border: 1px solid rgba(255, 69, 58, 0.3); }
   </style>
 </head>
 <body>
 
-  <div class="bg-glow"></div>
-
   <div class="app-container">
     <div class="top-bar">
       <div class="app-title" id="pageTitle">Menu</div>
-      <button class="seal-btn" onclick="toggleMenu()" title="Chuyển trang">🦭</button>
+      <button class="seal-btn" onclick="toggleMenu()">🦭</button>
     </div>
 
     <!-- VIEW 1: Menu -->
@@ -291,40 +237,49 @@
       <div class="menu-hint">Tạo thông báo giả mới</div>
     </div>
 
-    <!-- VIEW 2: Cấu hình thông báo -->
+    <!-- VIEW 2: Cấu hình -->
     <div class="view-content" id="studioView">
       
       <div class="form-section">
         <div class="section-label">Chọn ứng dụng</div>
         <div class="app-selector">
-          <div class="app-card selected" onclick="selectApp(this, 'Facebook', 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="FB">
+          
+          <!-- Facebook -->
+          <div class="app-card selected" onclick="selectApp(this, 'Facebook')">
+            <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             <span>Facebook</span>
           </div>
-          <div class="app-card" onclick="selectApp(this, 'Messenger', 'https://cdn-icons-png.flaticon.com/512/5968/5968771.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968771.png" alt="Messenger">
+
+          <!-- Messenger -->
+          <div class="app-card" onclick="selectApp(this, 'Messenger')">
+            <svg viewBox="0 0 24 24" fill="#0084FF"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.654V24l4.088-2.242c1.082.3 2.23.464 3.443.464 6.627 0 12-4.974 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26 6.559-6.963 3.13 3.259 5.889-3.259-6.56 6.964z"/></svg>
             <span>Messenger</span>
           </div>
-          <div class="app-card" onclick="selectApp(this, 'Instagram', 'https://cdn-icons-png.flaticon.com/512/174/174855.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram">
+
+          <!-- Instagram -->
+          <div class="app-card" onclick="selectApp(this, 'Instagram')">
+            <svg viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
             <span>Instagram</span>
           </div>
-          <div class="app-card" onclick="selectApp(this, 'TikTok', 'https://cdn-icons-png.flaticon.com/512/3046/3046124.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046124.png" alt="TikTok">
+
+          <!-- TikTok -->
+          <div class="app-card" onclick="selectApp(this, 'TikTok')">
+            <svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.31 1.54-1.3 2.53.01.81.42 1.59 1.08 2.07.72.53 1.66.72 2.54.52 1.11-.22 2.06-1.02 2.45-2.08.23-.62.33-1.28.32-1.94-.01-4.99-.01-9.98-.01-14.97z"/></svg>
             <span>TikTok</span>
           </div>
-          <div class="app-card" onclick="selectApp(this, 'Zalo', 'https://cdn-icons-png.flaticon.com/512/3670/3670089.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/3670/3670089.png" alt="Zalo">
+
+          <!-- Zalo -->
+          <div class="app-card" onclick="selectApp(this, 'Zalo')">
+            <svg viewBox="0 0 24 24" fill="#0068FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             <span>Zalo</span>
           </div>
-          <div class="app-card" onclick="selectApp(this, 'Discord', 'https://cdn-icons-png.flaticon.com/512/5968/5968756.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord">
+
+          <!-- Discord -->
+          <div class="app-card" onclick="selectApp(this, 'Discord')">
+            <svg viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
             <span>Discord</span>
           </div>
-          <div class="app-card" onclick="selectApp(this, 'YouTube', 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png')">
-            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube">
-            <span>YouTube</span>
-          </div>
+
         </div>
       </div>
 
@@ -361,17 +316,16 @@
   </div>
 
   <script>
-    let selectedApp = {
-      name: 'Facebook',
-      icon: 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png'
-    };
+    // Chống Safari nhảy tab khi chạm vào màn hình
+    (function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^http/;a.addEventListener("click",function(a){d=a.target;while(d.nodeName!=="A"&&d.nodeName!=="BODY")d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone");
 
+    let selectedAppName = 'Facebook';
     let timerId = null;
 
-    function selectApp(element, appName, iconUrl) {
+    function selectApp(element, appName) {
       document.querySelectorAll('.app-card').forEach(card => card.classList.remove('selected'));
       element.classList.add('selected');
-      selectedApp = { name: appName, icon: iconUrl };
+      selectedAppName = appName;
     }
 
     function toggleMenu() {
@@ -394,46 +348,39 @@
     async function requestPermission() {
       if ('Notification' in window) {
         const perm = await Notification.requestPermission();
-        if (perm === 'granted') return true;
-        alert('Cần cấp quyền Thông báo để tính năng hoạt động!');
-        return false;
+        return perm === 'granted';
       }
-      alert('Trình duyệt không hỗ trợ Web Notification!');
       return false;
     }
 
-    function sendNotification(title, body, icon) {
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(title, { body, icon });
-        });
-      } else {
-        new Notification(title, { body, icon });
-      }
+    function sendNotification(title, body) {
+      new Notification(title, { body });
     }
 
     async function startFakeNotification() {
       const hasPerm = await requestPermission();
-      if (!hasPerm) return;
+      if (!hasPerm) {
+        alert("Bạn chưa cấp quyền Thông báo cho ứng dụng!");
+        return;
+      }
 
-      const sender = document.getElementById('senderInput').value.trim() || selectedApp.name;
+      const sender = document.getElementById('senderInput').value.trim() || selectedAppName;
       const message = document.getElementById('msgInput').value.trim() || 'Bạn có thông báo mới';
       const totalCount = parseInt(document.getElementById('countInput').value) || 1;
       const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
 
-      const notificationTitle = `${selectedApp.name} • ${sender}`;
+      const title = `${selectedAppName} • ${sender}`;
 
       if (timerId) clearInterval(timerId);
 
       let currentCount = 0;
-
-      sendNotification(notificationTitle, message, selectedApp.icon);
+      sendNotification(title, message);
       currentCount++;
 
       if (totalCount > 1) {
         timerId = setInterval(() => {
           if (currentCount < totalCount) {
-            sendNotification(notificationTitle, message, selectedApp.icon);
+            sendNotification(title, message);
             currentCount++;
           } else {
             clearInterval(timerId);
