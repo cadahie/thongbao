@@ -1,14 +1,14 @@
 {
-  "name": "App Thong Bao",
+  "name": "Thông Báo Giả",
   "short_name": "ThongBao",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#007aff",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/1827/1827504.png",
-      "sizes": "192x192",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
