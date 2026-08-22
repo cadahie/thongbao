@@ -2,9 +2,22 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fake Notification Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Thông Báo Giả</title>
+
+  <!-- Đấu nối PWA Toàn màn hình ẩn thanh Safari cho iOS & Android -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ThongBao">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Icon App khi ra Màn hình chính -->
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1827/1827504.png">
   
+  <!-- Manifest nhúng trực tiếp dạng Data URI để tránh lỗi file rời -->
+  <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRoxI25nIEIjeDEwIEdp4bqjIiwKICAic2hvcnRfbmFtZSI6ICJUaG9uZ0JhbyIsCiAgInN0YXJ0X3VybCI6ICIvIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIKfQ==">
+
   <style>
     :root {
       --bg-color: #000000;
@@ -13,7 +26,6 @@
       --text-main: #ffffff;
       --text-sub: rgba(255, 255, 255, 0.6);
       --accent-blue: #0a84ff;
-      --accent-green: #30d158;
       --accent-red: #ff453a;
     }
 
@@ -33,9 +45,11 @@
       justify-content: center;
       align-items: center;
       overflow-x: hidden;
+      /* Tránh tai thỏ & thanh Home iOS che khuất */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Background Blur Effect */
     .bg-glow {
       position: fixed;
       width: 300px;
@@ -48,17 +62,16 @@
       z-index: 0;
     }
 
-    /* Main Container */
     .app-container {
       position: relative;
       width: 100%;
       max-width: 400px;
       height: 100vh;
       max-height: 844px;
-      background: rgba(18, 18, 20, 0.8);
+      background: rgba(18, 18, 20, 0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;
+      border-radius: 28px;
       border: 1px solid var(--card-border);
       display: flex;
       flex-direction: column;
@@ -67,7 +80,6 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
     }
 
-    /* Top Bar */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -95,7 +107,6 @@
       transform: scale(0.9);
     }
 
-    /* Views */
     .view-content {
       flex: 1;
       padding: 20px 24px;
@@ -108,7 +119,6 @@
       display: flex;
     }
 
-    /* Menu View */
     .menu-view {
       align-items: center;
       justify-content: center;
@@ -141,7 +151,6 @@
       color: var(--text-sub);
     }
 
-    /* Form Styles */
     .form-section {
       margin-bottom: 20px;
     }
@@ -155,7 +164,6 @@
       font-weight: 600;
     }
 
-    /* App Selector Horizontal Scroll */
     .app-selector {
       display: flex;
       gap: 12px;
@@ -205,7 +213,6 @@
       font-weight: 600;
     }
 
-    /* Inputs */
     .input-group {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -240,7 +247,6 @@
       flex: 1;
     }
 
-    /* Actions */
     .btn {
       width: 100%;
       padding: 14px;
@@ -274,22 +280,20 @@
   <div class="bg-glow"></div>
 
   <div class="app-container">
-    <!-- Top Bar -->
     <div class="top-bar">
       <div class="app-title" id="pageTitle">Menu</div>
       <button class="seal-btn" onclick="toggleMenu()" title="Chuyển trang">🦭</button>
     </div>
 
-    <!-- VIEW 1: Menu Trang Chủ -->
+    <!-- VIEW 1: Menu -->
     <div class="view-content menu-view active" id="menuView">
       <div class="add-btn-large" onclick="openStudio()">+</div>
       <div class="menu-hint">Tạo thông báo giả mới</div>
     </div>
 
-    <!-- VIEW 2: Giao diện Cấu hình Thông Báo Giả -->
+    <!-- VIEW 2: Cấu hình thông báo -->
     <div class="view-content" id="studioView">
       
-      <!-- Chọn ứng dụng -->
       <div class="form-section">
         <div class="section-label">Chọn ứng dụng</div>
         <div class="app-selector">
@@ -324,7 +328,6 @@
         </div>
       </div>
 
-      <!-- Nội dung tin nhắn -->
       <div class="form-section">
         <div class="section-label">Nội dung hiển thị</div>
         <div class="input-group">
@@ -337,7 +340,6 @@
         </div>
       </div>
 
-      <!-- Tần suất & Số lượng -->
       <div class="form-section">
         <div class="section-label">Tần suất & Số lượng</div>
         <div class="row-inputs">
@@ -352,7 +354,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <button class="btn btn-primary" onclick="startFakeNotification()">Bắt đầu gửi</button>
       <button class="btn btn-danger" onclick="stopNotification()">Dừng lại</button>
 
@@ -367,25 +368,20 @@
 
     let timerId = null;
 
-    // Đổi tab ứng dụng
     function selectApp(element, appName, iconUrl) {
       document.querySelectorAll('.app-card').forEach(card => card.classList.remove('selected'));
       element.classList.add('selected');
       selectedApp = { name: appName, icon: iconUrl };
     }
 
-    // Toggle menu qua lại khi bấm 🦭
     function toggleMenu() {
       const menuView = document.getElementById('menuView');
-      const studioView = document.getElementById('studioView');
-      const pageTitle = document.getElementById('pageTitle');
-
       if (menuView.classList.contains('active')) {
         openStudio();
       } else {
-        studioView.classList.remove('active');
+        document.getElementById('studioView').classList.remove('active');
         menuView.classList.add('active');
-        pageTitle.innerText = 'Menu';
+        document.getElementById('pageTitle').innerText = 'Menu';
       }
     }
 
@@ -395,7 +391,6 @@
       document.getElementById('pageTitle').innerText = 'Thông Báo Giả';
     }
 
-    // Xin quyền thông báo
     async function requestPermission() {
       if ('Notification' in window) {
         const perm = await Notification.requestPermission();
@@ -407,7 +402,6 @@
       return false;
     }
 
-    // Phát 1 notification
     function sendNotification(title, body, icon) {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.ready.then(reg => {
@@ -418,7 +412,6 @@
       }
     }
 
-    // Khởi chạy tiến trình
     async function startFakeNotification() {
       const hasPerm = await requestPermission();
       if (!hasPerm) return;
@@ -428,14 +421,12 @@
       const totalCount = parseInt(document.getElementById('countInput').value) || 1;
       const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
 
-      // Tiêu đề dạng: "Messenger • Crush"
       const notificationTitle = `${selectedApp.name} • ${sender}`;
 
       if (timerId) clearInterval(timerId);
 
       let currentCount = 0;
 
-      // Phát lần 1 ngay lập tức
       sendNotification(notificationTitle, message, selectedApp.icon);
       currentCount++;
 
@@ -452,7 +443,6 @@
       }
     }
 
-    // Dừng tiến trình
     function stopNotification() {
       if (timerId) {
         clearInterval(timerId);
