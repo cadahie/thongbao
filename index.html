@@ -21,6 +21,7 @@
     });
 
     let autoTimer = null;
+    let dailyTimer = null;
     let showNumber = true;
 
     function toggleShowNumber() {
@@ -66,6 +67,7 @@
       }
     }
 
+    // --- 1. LẶP THÔNG BÁO TẮC BỤP ---
     async function batDauThongBao() {
       const daCoQuyen = await yeuCauQuyen();
       if (!daCoQuyen) return;
@@ -78,10 +80,7 @@
       if (autoTimer) clearInterval(autoTimer);
 
       let currentCount = 1;
-
-      const getFormattedTitle = (index) => {
-        return showNumber ? `${baseTitle} (${index}/${countTotal})` : baseTitle;
-      };
+      const getFormattedTitle = (index) => showNumber ? `${baseTitle} (${index}/${countTotal})` : baseTitle;
 
       phatThongBao(getFormattedTitle(currentCount), message);
 
@@ -102,7 +101,76 @@
       if (autoTimer) {
         clearInterval(autoTimer);
         autoTimer = null;
-        alert("Đã dừng tiến trình gửi thông báo!");
+        alert("Đã dừng tiến trình gửi thông báo hàng loạt!");
+      }
+    }
+
+    // --- 2. BỘ ĐẾM NGÀY ---
+    async function guiThongBaoDemNgay() {
+      const daCoQuyen = await yeuCauQuyen();
+      if (!daCoQuyen) return;
+
+      const targetDateVal = document.getElementById('targetDate').value;
+      const eventName = document.getElementById('eventName').value.trim() || "Sự kiện";
+
+      if (!targetDateVal) {
+        alert("Vui lòng chọn ngày đích!");
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const target = new Date(targetDateVal);
+      target.setHours(0, 0, 0, 0);
+
+      const diffTime = target.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      let msg = "";
+      if (diffDays > 0) {
+        msg = `Còn ${diffDays} ngày nữa là đến!`;
+      } else if (diffDays === 0) {
+        msg = `Đã đến ngày hôm nay! 🎉`;
+      } else {
+        msg = `Đã qua ${Math.abs(diffDays)} ngày!`;
+      }
+
+      phatThongBao(`Bộ Đếm Ngày • ${eventName}`, msg);
+    }
+
+    // --- 3. BÁO THỨC HẰNG NGÀY ---
+    async function datThongBaoHangNgay() {
+      const daCoQuyen = await yeuCauQuyen();
+      if (!daCoQuyen) return;
+
+      const timeVal = document.getElementById('dailyTime').value;
+      const dailyMsg = document.getElementById('dailyMsgInput').value.trim() || "Thông báo hằng ngày!";
+
+      if (!timeVal) {
+        alert("Vui lòng chọn giờ phút!");
+        return;
+      }
+
+      const [hours, minutes] = timeVal.split(':').map(Number);
+
+      if (dailyTimer) clearInterval(dailyTimer);
+
+      alert(`Đã đặt báo thức hằng ngày lúc ${timeVal}! Hãy giữ ứng dụng hoạt động.`);
+
+      dailyTimer = setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === hours && now.getMinutes() === minutes && now.getSeconds() === 0) {
+          phatThongBao("Lịch Nhắc Hằng Ngày ⏰", dailyMsg);
+        }
+      }, 1000);
+    }
+
+    function huydatHangNgay() {
+      if (dailyTimer) {
+        clearInterval(dailyTimer);
+        dailyTimer = null;
+        alert("Đã hủy lịch nhắc hằng ngày!");
       }
     }
   </script>
@@ -125,16 +193,18 @@
       padding: 24px;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 360px;
+      max-width: 380px;
       width: 100%;
+      margin-bottom: 16px;
     }
     h2 {
       margin-top: 0;
       text-align: center;
       color: #1c1c1e;
+      font-size: 18px;
     }
     .form-group {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       text-align: left;
     }
     label {
@@ -164,47 +234,39 @@
       flex: 1;
     }
     button {
-      padding: 14px;
-      font-size: 15px;
+      padding: 12px;
+      font-size: 14px;
       font-weight: 600;
       color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
       width: 100%;
-      margin-top: 8px;
+      margin-top: 6px;
       transition: background-color 0.2s ease;
     }
     .btn-toggle {
       padding: 10px 12px;
-      font-size: 14px;
       margin-top: 0;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .btn-on {
-      background-color: #007aff;
-    }
-    .btn-off {
-      background-color: #8e8e93;
-    }
-    .btn-start {
-      background-color: #34c759;
-    }
-    .btn-stop {
-      background-color: #ff3b30;
-    }
-    button:active {
-      opacity: 0.8;
-    }
+    .btn-on { background-color: #007aff; }
+    .btn-off { background-color: #8e8e93; }
+    .btn-start { background-color: #34c759; }
+    .btn-stop { background-color: #ff3b30; }
+    .btn-purple { background-color: #af52de; }
+    .btn-orange { background-color: #ff9500; }
+    button:active { opacity: 0.8; }
   </style>
 </head>
 <body>
 
+  <!-- CARD 1: CẤU HÌNH THÔNG BÁO TẮC BỤP -->
   <div class="card">
-    <h2>Cấu Hình Thông Báo</h2>
+    <h2>1. Gửi Thông Báo Tùy Chỉnh</h2>
     
     <div class="form-group">
       <label for="titleInput">Tiêu đề thông báo</label>
@@ -235,6 +297,41 @@
 
     <button class="btn-start" onclick="batDauThongBao()">Gửi thông báo</button>
     <button class="btn-stop" onclick="dungThongBao()">Dừng lại</button>
+  </div>
+
+  <!-- CARD 2: BỘ ĐẾM NGÀY -->
+  <div class="card">
+    <h2>2. Bộ Đếm Ngược Ngày</h2>
+
+    <div class="form-group">
+      <label for="eventName">Tên sự kiện / Mục tiêu</label>
+      <input type="text" id="eventName" value="Thi Học Kỳ" placeholder="Nhập tên sự kiện...">
+    </div>
+
+    <div class="form-group">
+      <label for="targetDate">Chọn ngày mốc</label>
+      <input type="date" id="targetDate">
+    </div>
+
+    <button class="btn-purple" onclick="guiThongBaoDemNgay()">Kiểm tra & Gửi thông báo ngày</button>
+  </div>
+
+  <!-- CARD 3: THÔNG BÁO HẰNG NGÀY -->
+  <div class="card">
+    <h2>3. Nhắc Nhở Hằng Ngày</h2>
+
+    <div class="form-group">
+      <label for="dailyTime">Chọn giờ & phút phát thông báo</label>
+      <input type="time" id="dailyTime" value="07:00">
+    </div>
+
+    <div class="form-group">
+      <label for="dailyMsgInput">Nội dung nhắc nhở</label>
+      <input type="text" id="dailyMsgInput" value="Chúc bạn một ngày mới vui vẻ! ✨">
+    </div>
+
+    <button class="btn-orange" onclick="datThongBaoHangNgay()">Bật báo thức hằng ngày</button>
+    <button class="btn-stop" onclick="huydatHangNgay()">Hủy báo thức</button>
   </div>
 
 </body>
