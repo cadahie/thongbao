@@ -2,202 +2,464 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tùy Chỉnh Thông Báo</title>
-
-  <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ThongBao">
-
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "33007f12-79f1-4b3b-919e-ee08f6bb4d1f",
-      });
-    });
-
-    let autoTimer = null; // Biến lưu timer để có thể hủy khi cần
-
-    // Xin quyền gửi thông báo từ trình duyệt/điện thoại
-    async function yeuCauQuyen() {
-      if ('Notification' in window) {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          alert('Bạn cần cấp quyền Thông báo để tính năng này hoạt động!');
-          return false;
-        }
-        return true;
-      }
-      alert('Trình duyệt của bạn không hỗ trợ Thông báo Web!');
-      return false;
-    }
-
-    // Hàm gửi 1 thông báo thủ công
-    async function phatThongBao(title, message) {
-      if ('serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.ready;
-        reg.showNotification(title, {
-          body: message,
-          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png",
-          badge: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png"
-        });
-      } else {
-        new Notification(title, { body: message });
-      }
-    }
-
-    // Hàm khởi chạy thông báo tùy chỉnh dựa vào input người dùng
-    async function batDauThongBao() {
-      const daCoQuyen = await yeuCauQuyen();
-      if (!daCoQuyen) return;
-
-      // Đọc giá trị từ các ô nhập liệu
-      const title = document.getElementById('titleInput').value.trim() || "Thông báo";
-      const message = document.getElementById('messageInput').value.trim() || "Nội dung thông báo";
-      const countTotal = parseInt(document.getElementById('countInput').value) || 1;
-      const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
-
-      // Hủy tiến trình cũ nếu đang chạy
-      if (autoTimer) clearInterval(autoTimer);
-
-      let currentCount = 1;
-      // Phát thông báo lần 1 ngay lập tức
-      phatThongBao(`${title} (${currentCount}/${countTotal})`, message);
-
-      if (countTotal > 1) {
-        autoTimer = setInterval(() => {
-          currentCount++;
-          if (currentCount <= countTotal) {
-            phatThongBao(`${title} (${currentCount}/${countTotal})`, message);
-          } else {
-            clearInterval(autoTimer);
-            autoTimer = null;
-          }
-        }, intervalSec * 1000); // Đổi từ giây sang mili-giây
-      }
-    }
-
-    // Hàm dừng gửi thông báo ngay lập tức
-    function dungThongBao() {
-      if (autoTimer) {
-        clearInterval(autoTimer);
-        autoTimer = null;
-        alert("Đã dừng tiến trình gửi thông báo!");
-      }
-    }
-  </script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fake Notification Studio</title>
+  
   <style>
+    :root {
+      --bg-color: #000000;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-main: #ffffff;
+      --text-sub: rgba(255, 255, 255, 0.6);
+      --accent-blue: #0a84ff;
+      --accent-green: #30d158;
+      --accent-red: #ff453a;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Background Blur Effect */
+    .bg-glow {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(10, 132, 255, 0.15) 0%, rgba(0,0,0,0) 70%);
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Main Container */
+    .app-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      height: 100vh;
+      max-height: 844px;
+      background: rgba(18, 18, 20, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      border: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+
+    .seal-btn {
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      transition: transform 0.2s;
+    }
+
+    .seal-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Views */
+    .view-content {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+
+    .view-content.active {
+      display: flex;
+    }
+
+    /* Menu View */
+    .menu-view {
+      align-items: center;
+      justify-content: center;
+    }
+
+    .add-btn-large {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--accent-blue);
+      font-size: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .add-btn-large:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .menu-hint {
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    /* Form Styles */
+    .form-section {
+      margin-bottom: 20px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    /* App Selector Horizontal Scroll */
+    .app-selector {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+
+    .app-selector::-webkit-scrollbar {
+      display: none;
+    }
+
+    .app-card {
+      flex: 0 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      background-color: #f2f2f7;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    .card {
-      background: white;
-      padding: 24px;
+      padding: 12px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 360px;
-      width: 100%;
+      cursor: pointer;
+      width: 72px;
+      transition: all 0.2s ease;
     }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-      color: #1c1c1e;
-    }
-    .form-group {
-      margin-bottom: 14px;
-      text-align: left;
-    }
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #6c6c70;
+
+    .app-card img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       margin-bottom: 6px;
     }
-    input {
+
+    .app-card span {
+      font-size: 11px;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+
+    .app-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(10, 132, 255, 0.15);
+    }
+
+    .app-card.selected span {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Inputs */
+    .input-group {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 4px 14px;
+      margin-bottom: 12px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    .input-group input {
       width: 100%;
-      padding: 10px 12px;
+      background: none;
+      border: none;
+      color: var(--text-main);
       font-size: 15px;
-      border: 1px solid #c7c7cc;
-      border-radius: 8px;
-      box-sizing: border-box;
+      padding: 6px 0 8px 0;
       outline: none;
     }
-    input:focus {
-      border-color: #007aff;
-    }
-    .row {
+
+    .row-inputs {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
-    .row .form-group {
+
+    .row-inputs .input-group {
       flex: 1;
     }
-    button {
+
+    /* Actions */
+    .btn {
+      width: 100%;
       padding: 14px;
+      border-radius: 14px;
       font-size: 15px;
       font-weight: 600;
-      color: white;
       border: none;
-      border-radius: 12px;
       cursor: pointer;
-      width: 100%;
       margin-top: 8px;
+      transition: opacity 0.2s;
     }
-    .btn-start {
-      background-color: #34c759; /* Màu xanh lá */
+
+    .btn-primary {
+      background-color: var(--accent-blue);
+      color: white;
     }
-    .btn-stop {
-      background-color: #ff3b30; /* Màu đỏ */
+
+    .btn-danger {
+      background-color: rgba(255, 69, 58, 0.2);
+      color: var(--accent-red);
+      border: 1px solid rgba(255, 69, 58, 0.3);
     }
-    button:active {
-      opacity: 0.8;
+
+    .btn:active {
+      opacity: 0.7;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>Cấu Hình Thông Báo</h2>
-    
-    <div class="form-group">
-      <label for="titleInput">Tiêu đề thông báo</label>
-      <input type="text" id="titleInput" value="Cảnh báo hệ thống" placeholder="Nhập tiêu đề...">
+  <div class="bg-glow"></div>
+
+  <div class="app-container">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="app-title" id="pageTitle">Menu</div>
+      <button class="seal-btn" onclick="toggleMenu()" title="Chuyển trang">🦭</button>
     </div>
 
-    <div class="form-group">
-      <label for="messageInput">Nội dung thông báo</label>
-      <input type="text" id="messageInput" value="Đã đến giờ uống nước!" placeholder="Nhập nội dung...">
+    <!-- VIEW 1: Menu Trang Chủ -->
+    <div class="view-content menu-view active" id="menuView">
+      <div class="add-btn-large" onclick="openStudio()">+</div>
+      <div class="menu-hint">Tạo thông báo giả mới</div>
     </div>
 
-    <div class="row">
-      <div class="form-group">
-        <label for="countInput">Số lần gửi</label>
-        <input type="number" id="countInput" value="5" min="1" max="100">
+    <!-- VIEW 2: Giao diện Cấu hình Thông Báo Giả -->
+    <div class="view-content" id="studioView">
+      
+      <!-- Chọn ứng dụng -->
+      <div class="form-section">
+        <div class="section-label">Chọn ứng dụng</div>
+        <div class="app-selector">
+          <div class="app-card selected" onclick="selectApp(this, 'Facebook', 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968764.png" alt="FB">
+            <span>Facebook</span>
+          </div>
+          <div class="app-card" onclick="selectApp(this, 'Messenger', 'https://cdn-icons-png.flaticon.com/512/5968/5968771.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968771.png" alt="Messenger">
+            <span>Messenger</span>
+          </div>
+          <div class="app-card" onclick="selectApp(this, 'Instagram', 'https://cdn-icons-png.flaticon.com/512/174/174855.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram">
+            <span>Instagram</span>
+          </div>
+          <div class="app-card" onclick="selectApp(this, 'TikTok', 'https://cdn-icons-png.flaticon.com/512/3046/3046124.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046124.png" alt="TikTok">
+            <span>TikTok</span>
+          </div>
+          <div class="app-card" onclick="selectApp(this, 'Zalo', 'https://cdn-icons-png.flaticon.com/512/3670/3670089.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/3670/3670089.png" alt="Zalo">
+            <span>Zalo</span>
+          </div>
+          <div class="app-card" onclick="selectApp(this, 'Discord', 'https://cdn-icons-png.flaticon.com/512/5968/5968756.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord">
+            <span>Discord</span>
+          </div>
+          <div class="app-card" onclick="selectApp(this, 'YouTube', 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png')">
+            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube">
+            <span>YouTube</span>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="intervalInput">Giãn cách (giây)</label>
-        <input type="number" id="intervalInput" value="2" min="0.5" step="0.5">
+      <!-- Nội dung tin nhắn -->
+      <div class="form-section">
+        <div class="section-label">Nội dung hiển thị</div>
+        <div class="input-group">
+          <label>Tên người gửi / Tiêu đề</label>
+          <input type="text" id="senderInput" value="Crush">
+        </div>
+        <div class="input-group">
+          <label>Nội dung tin nhắn</label>
+          <input type="text" id="msgInput" value="Tối nay rảnh không, đi chơi nha! ❤️">
+        </div>
       </div>
-    </div>
 
-    <button class="btn-start" onclick="batDauThongBao()">Gửi thông báo</button>
-    <button class="btn-stop" onclick="dungThongBao()">Dừng lại</button>
+      <!-- Tần suất & Số lượng -->
+      <div class="form-section">
+        <div class="section-label">Tần suất & Số lượng</div>
+        <div class="row-inputs">
+          <div class="input-group">
+            <label>Tổng số lượt</label>
+            <input type="number" id="countInput" value="3" min="1">
+          </div>
+          <div class="input-group">
+            <label>Giãn cách (Giây)</label>
+            <input type="number" id="intervalInput" value="2" min="0.5" step="0.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <button class="btn btn-primary" onclick="startFakeNotification()">Bắt đầu gửi</button>
+      <button class="btn btn-danger" onclick="stopNotification()">Dừng lại</button>
+
+    </div>
   </div>
 
+  <script>
+    let selectedApp = {
+      name: 'Facebook',
+      icon: 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png'
+    };
+
+    let timerId = null;
+
+    // Đổi tab ứng dụng
+    function selectApp(element, appName, iconUrl) {
+      document.querySelectorAll('.app-card').forEach(card => card.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedApp = { name: appName, icon: iconUrl };
+    }
+
+    // Toggle menu qua lại khi bấm 🦭
+    function toggleMenu() {
+      const menuView = document.getElementById('menuView');
+      const studioView = document.getElementById('studioView');
+      const pageTitle = document.getElementById('pageTitle');
+
+      if (menuView.classList.contains('active')) {
+        openStudio();
+      } else {
+        studioView.classList.remove('active');
+        menuView.classList.add('active');
+        pageTitle.innerText = 'Menu';
+      }
+    }
+
+    function openStudio() {
+      document.getElementById('menuView').classList.remove('active');
+      document.getElementById('studioView').classList.add('active');
+      document.getElementById('pageTitle').innerText = 'Thông Báo Giả';
+    }
+
+    // Xin quyền thông báo
+    async function requestPermission() {
+      if ('Notification' in window) {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') return true;
+        alert('Cần cấp quyền Thông báo để tính năng hoạt động!');
+        return false;
+      }
+      alert('Trình duyệt không hỗ trợ Web Notification!');
+      return false;
+    }
+
+    // Phát 1 notification
+    function sendNotification(title, body, icon) {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, { body, icon });
+        });
+      } else {
+        new Notification(title, { body, icon });
+      }
+    }
+
+    // Khởi chạy tiến trình
+    async function startFakeNotification() {
+      const hasPerm = await requestPermission();
+      if (!hasPerm) return;
+
+      const sender = document.getElementById('senderInput').value.trim() || selectedApp.name;
+      const message = document.getElementById('msgInput').value.trim() || 'Bạn có thông báo mới';
+      const totalCount = parseInt(document.getElementById('countInput').value) || 1;
+      const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
+
+      // Tiêu đề dạng: "Messenger • Crush"
+      const notificationTitle = `${selectedApp.name} • ${sender}`;
+
+      if (timerId) clearInterval(timerId);
+
+      let currentCount = 0;
+
+      // Phát lần 1 ngay lập tức
+      sendNotification(notificationTitle, message, selectedApp.icon);
+      currentCount++;
+
+      if (totalCount > 1) {
+        timerId = setInterval(() => {
+          if (currentCount < totalCount) {
+            sendNotification(notificationTitle, message, selectedApp.icon);
+            currentCount++;
+          } else {
+            clearInterval(timerId);
+            timerId = null;
+          }
+        }, intervalSec * 1000);
+      }
+    }
+
+    // Dừng tiến trình
+    function stopNotification() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+        alert('Đã dừng tiến trình!');
+      }
+    }
+  </script>
 </body>
 </html>
