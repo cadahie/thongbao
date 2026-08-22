@@ -22,7 +22,12 @@
 
     let autoTimer = null;
     let dailyTimer = null;
+    let countdownTimer = null;
     let showNumber = true;
+
+    // Cờ chống lặp thông báo trong cùng 1 phút
+    let dailyTriggeredMin = -1;
+    let countdownTriggeredMin = -1;
 
     function toggleShowNumber() {
       showNumber = !showNumber;
@@ -67,7 +72,7 @@
       }
     }
 
-    // --- 1. LẶP THÔNG BÁO TẮC BỤP ---
+    // --- 1. GỬI THÔNG BÁO TẮC BỤP ---
     async function batDauThongBao() {
       const daCoQuyen = await yeuCauQuyen();
       if (!daCoQuyen) return;
@@ -106,17 +111,9 @@
     }
 
     // --- 2. BỘ ĐẾM NGÀY ---
-    async function guiThongBaoDemNgay() {
-      const daCoQuyen = await yeuCauQuyen();
-      if (!daCoQuyen) return;
-
+    function tinhSoNgayConLai() {
       const targetDateVal = document.getElementById('targetDate').value;
-      const eventName = document.getElementById('eventName').value.trim() || "Sự kiện";
-
-      if (!targetDateVal) {
-        alert("Vui lòng chọn ngày đích!");
-        return;
-      }
+      if (!targetDateVal) return null;
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -125,21 +122,61 @@
       target.setHours(0, 0, 0, 0);
 
       const diffTime = target.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
 
-      let msg = "";
-      if (diffDays > 0) {
-        msg = `Còn ${diffDays} ngày nữa là đến!`;
-      } else if (diffDays === 0) {
-        msg = `Đã đến ngày hôm nay! 🎉`;
-      } else {
-        msg = `Đã qua ${Math.abs(diffDays)} ngày!`;
+    async function guiThongBaoDemNgay() {
+      const daCoQuyen = await yeuCauQuyen();
+      if (!daCoQuyen) return;
+
+      const eventName = document.getElementById('eventName').value.trim() || "Sự kiện";
+      const diffDays = tinhSoNgayConLai();
+
+      if (diffDays === null) {
+        alert("Vui lòng chọn ngày đích!");
+        return;
       }
 
+      let msg = diffDays > 0 ? `Còn ${diffDays} ngày nữa là đến!` : (diffDays === 0 ? `Đã đến ngày hôm nay! 🎉` : `Đã qua ${Math.abs(diffDays)} ngày!`);
       phatThongBao(`Bộ Đếm Ngày • ${eventName}`, msg);
     }
 
-    // --- 3. BÁO THỨC HẰNG NGÀY ---
+    // Tự động báo đếm ngược đúng 6:00 sáng
+    async function batHenGioDemNgay() {
+      const daCoQuyen = await yeuCauQuyen();
+      if (!daCoQuyen) return;
+
+      if (!document.getElementById('targetDate').value) {
+        alert("Vui lòng chọn ngày mốc trước khi bật hẹn giờ 6h sáng!");
+        return;
+      }
+
+      if (countdownTimer) clearInterval(countdownTimer);
+      alert("Đã bật tự động gửi thông báo đếm ngược ngày vào đúng 6:00 sáng mỗi ngày!");
+
+      countdownTimer = setInterval(() => {
+        const now = new Date();
+        // Kiểm tra đúng 6:00 AM
+        if (now.getHours() === 6 && now.getMinutes() === 0) {
+          if (countdownTriggeredMin !== now.getMinutes()) {
+            countdownTriggeredMin = now.getMinutes();
+            guiThongBaoDemNgay();
+          }
+        } else {
+          countdownTriggeredMin = -1;
+        }
+      }, 1000);
+    }
+
+    function tatHenGioDemNgay() {
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        alert("Đã tắt tự động thông báo đếm ngược 6:00 sáng!");
+      }
+    }
+
+    // --- 3. BÁO THỨC HẰNG NGÀY (FIX BỊ BỎ LỠ) ---
     async function datThongBaoHangNgay() {
       const daCoQuyen = await yeuCauQuyen();
       if (!daCoQuyen) return;
@@ -152,16 +189,24 @@
         return;
       }
 
-      const [hours, minutes] = timeVal.split(':').map(Number);
+      const [targetHour, targetMinute] = timeVal.split(':').map(Number);
 
       if (dailyTimer) clearInterval(dailyTimer);
-
-      alert(`Đã đặt báo thức hằng ngày lúc ${timeVal}! Hãy giữ ứng dụng hoạt động.`);
+      alert(`Đã đặt lịch nhắc hằng ngày lúc ${timeVal}! Hãy giữ tab/ứng dụng mở.`);
 
       dailyTimer = setInterval(() => {
         const now = new Date();
-        if (now.getHours() === hours && now.getMinutes() === minutes && now.getSeconds() === 0) {
-          phatThongBao("Lịch Nhắc Hằng Ngày ⏰", dailyMsg);
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+
+        // So sánh theo Giờ và Phút
+        if (currentHour === targetHour && currentMinute === targetMinute) {
+          if (dailyTriggeredMin !== currentMinute) {
+            dailyTriggeredMin = currentMinute; // Đánh dấu đã bắn trong phút này
+            phatThongBao("Lịch Nhắc Hằng Ngày ⏰", dailyMsg);
+          }
+        } else {
+          dailyTriggeredMin = -1; // Reset cờ khi bước sang phút khác
         }
       }, 1000);
     }
@@ -295,7 +340,7 @@
       <strong id="numberStatus">Bật</strong>
     </button>
 
-    <button class="btn-start" onclick="batDauThongBao()">Gửi thông báo</button>
+    <button class="btn-start" onclick="batDauThongBao()">Gửi thông báo ngay</button>
     <button class="btn-stop" onclick="dungThongBao()">Dừng lại</button>
   </div>
 
@@ -313,7 +358,9 @@
       <input type="date" id="targetDate">
     </div>
 
-    <button class="btn-purple" onclick="guiThongBaoDemNgay()">Kiểm tra & Gửi thông báo ngày</button>
+    <button class="btn-purple" onclick="guiThongBaoDemNgay()">Bắn thông báo ngay</button>
+    <button class="btn-start" onclick="batHenGioDemNgay()">Bật báo 6:00 sáng mỗi ngày</button>
+    <button class="btn-stop" onclick="tatHenGioDemNgay()">Tắt báo 6:00 sáng</button>
   </div>
 
   <!-- CARD 3: THÔNG BÁO HẰNG NGÀY -->
@@ -322,7 +369,7 @@
 
     <div class="form-group">
       <label for="dailyTime">Chọn giờ & phút phát thông báo</label>
-      <input type="time" id="dailyTime" value="07:00">
+      <input type="time" id="dailyTime">
     </div>
 
     <div class="form-group">
@@ -331,7 +378,7 @@
     </div>
 
     <button class="btn-orange" onclick="datThongBaoHangNgay()">Bật báo thức hằng ngày</button>
-    <button class="btn-stop" onclick="huydatHangNgay()">Hủy báo thức</button>
+    <button class="btn-stop" onclick="huydatHangNgay()">Tắt báo thức</button>
   </div>
 
 </body>
