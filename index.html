@@ -13,22 +13,20 @@
 
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
+    const ONE_SIGNAL_APP_ID = "33007f12-79f1-4b3b-919e-ee08f6bb4d1f";
+    const REST_API_KEY = "os_v2_app_gmah6etz6fftxem65yepno2nd7jq3kbcrshudhvh5fp6dcustqssczglh2ru4vlek3nu3nbngbaajrwm4nrkzqlocty7jkxhx3kh5i";
+
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.init({
-        appId: "33007f12-79f1-4b3b-919e-ee08f6bb4d1f",
+        appId: ONE_SIGNAL_APP_ID,
       });
     });
 
     let autoTimer = null;
-    let dailyTimer = null;
-    let countdownTimer = null;
     let showNumber = true;
 
-    let dailyTriggeredMin = -1;
-    let countdownTriggeredMin = -1;
-
-    // --- TỰ ĐỘNG LƯU & KHÔI PHỤC DỮ LIỆU ---
+    // --- LƯU & KHÔI PHỤC DỮ LIỆU CŨ ---
     const inputIds = [
       'titleInput', 'messageInput', 'countInput', 'intervalInput',
       'eventName', 'targetDate', 'dailyTime', 'dailyMsgInput'
@@ -88,24 +86,48 @@
       return false;
     }
 
-    async function phatThongBao(title, message) {
+    // --- HÀM GỬI LỆNH HẸN GIỜ LÊN SERVER ONESIGNAL ---
+    async function guiThongBaoQuaServer(title, message, sendAtDate) {
+      try {
+        const response = await fetch("https://onesignal.com/api/v1/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": `Basic ${REST_API_KEY}`
+          },
+          body: JSON.stringify({
+            app_id: ONE_SIGNAL_APP_ID,
+            included_segments: ["Subscribed Users"],
+            headings: { "en": title },
+            contents: { "en": message },
+            send_after: sendAtDate.toISOString()
+          })
+        });
+
+        const data = await response.json();
+        if (data.id) {
+          alert(`✅ Đã đặt lịch thành công lên Server!\nThông báo sẽ phát vào: ${sendAtDate.toLocaleString('vi-VN')}\n(Bạn có thể đóng trang web và tắt màn hình).`);
+        } else {
+          alert("Lỗi cài đặt thông báo: " + JSON.stringify(data));
+        }
+      } catch (err) {
+        alert("Không thể kết nối đến máy chủ OneSignal!");
+      }
+    }
+
+    async function phatThongBaoNgay(title, message) {
       const iconUrl = "https://files.catbox.moe/qlht3h.jpeg";
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready;
-        reg.showNotification(title, {
-          body: message,
-          icon: iconUrl,
-          badge: iconUrl
-        });
+        reg.showNotification(title, { body: message, icon: iconUrl, badge: iconUrl });
       } else {
         new Notification(title, { body: message, icon: iconUrl });
       }
     }
 
-    // --- 1. GỬI THÔNG BÁO TẮC BỤP ---
+    // --- 1. THÔNG BÁO TẮC BỤP ---
     async function batDauThongBao() {
-      const daCoQuyen = await yeuCauQuyen();
-      if (!daCoQuyen) return;
+      if (!await yeuCauQuyen()) return;
 
       const baseTitle = document.getElementById('titleInput').value.trim() || "Thông báo";
       const message = document.getElementById('messageInput').value.trim() || "Nội dung thông báo";
@@ -117,13 +139,13 @@
       let currentCount = 1;
       const getFormattedTitle = (index) => showNumber ? `${baseTitle} (${index}/${countTotal})` : baseTitle;
 
-      phatThongBao(getFormattedTitle(currentCount), message);
+      phatThongBaoNgay(getFormattedTitle(currentCount), message);
 
       if (countTotal > 1) {
         autoTimer = setInterval(() => {
           currentCount++;
           if (currentCount <= countTotal) {
-            phatThongBao(getFormattedTitle(currentCount), message);
+            phatThongBaoNgay(getFormattedTitle(currentCount), message);
           } else {
             clearInterval(autoTimer);
             autoTimer = null;
@@ -136,14 +158,21 @@
       if (autoTimer) {
         clearInterval(autoTimer);
         autoTimer = null;
-        alert("Đã dừng tiến trình gửi thông báo hàng loạt!");
+        alert("Đã dừng tiến trình gửi!");
       }
     }
 
-    // --- 2. BỘ ĐẾM NGÀY ---
-    function tinhSoNgayConLai() {
+    // --- 2. BỘ ĐẾM NGÀY SERVER (6:00 SÁNG) ---
+    async function batHenGioDemNgayServer() {
+      if (!await yeuCauQuyen()) return;
+
       const targetDateVal = document.getElementById('targetDate').value;
-      if (!targetDateVal) return null;
+      const eventName = document.getElementById('eventName').value.trim() || "Sự kiện";
+
+      if (!targetDateVal) {
+        alert("Vui lòng chọn ngày mốc!");
+        return;
+      }
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -151,99 +180,41 @@
       const target = new Date(targetDateVal);
       target.setHours(0, 0, 0, 0);
 
-      const diffTime = target.getTime() - today.getTime();
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    async function guiThongBaoDemNgay() {
-      const daCoQuyen = await yeuCauQuyen();
-      if (!daCoQuyen) return;
-
-      const eventName = document.getElementById('eventName').value.trim() || "Sự kiện";
-      const diffDays = tinhSoNgayConLai();
-
-      if (diffDays === null) {
-        alert("Vui lòng chọn ngày đích!");
-        return;
-      }
-
+      const diffDays = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       let msg = diffDays > 0 ? `Còn ${diffDays} ngày nữa là đến!` : (diffDays === 0 ? `Đã đến ngày hôm nay! 🎉` : `Đã qua ${Math.abs(diffDays)} ngày!`);
-      phatThongBao(`Bộ Đếm Ngày • ${eventName}`, msg);
-    }
 
-    async function batHenGioDemNgay() {
-      const daCoQuyen = await yeuCauQuyen();
-      if (!daCoQuyen) return;
-
-      if (!document.getElementById('targetDate').value) {
-        alert("Vui lòng chọn ngày mốc trước khi bật hẹn giờ 6h sáng!");
-        return;
+      // Lên lịch vào 6:00 sáng mai trên Server
+      const sendTime = new Date();
+      if (sendTime.getHours() >= 6) {
+        sendTime.setDate(sendTime.getDate() + 1);
       }
+      sendTime.setHours(6, 0, 0, 0);
 
-      if (countdownTimer) clearInterval(countdownTimer);
-      alert("Đã bật tự động gửi thông báo đếm ngược ngày vào đúng 6:00 sáng mỗi ngày!");
-
-      countdownTimer = setInterval(() => {
-        const now = new Date();
-        if (now.getHours() === 6 && now.getMinutes() === 0) {
-          if (countdownTriggeredMin !== now.getMinutes()) {
-            countdownTriggeredMin = now.getMinutes();
-            guiThongBaoDemNgay();
-          }
-        } else {
-          countdownTriggeredMin = -1;
-        }
-      }, 1000);
+      await guiThongBaoQuaServer(`Bộ Đếm Ngày • ${eventName}`, msg, sendTime);
     }
 
-    function tatHenGioDemNgay() {
-      if (countdownTimer) {
-        clearInterval(countdownTimer);
-        countdownTimer = null;
-        alert("Đã tắt tự động thông báo đếm ngược 6:00 sáng!");
-      }
-    }
-
-    // --- 3. BÁO THỨC HẰNG NGÀY ---
-    async function datThongBaoHangNgay() {
-      const daCoQuyen = await yeuCauQuyen();
-      if (!daCoQuyen) return;
+    // --- 3. BÁO THỨC HẰNG NGÀY SERVER ---
+    async function datThongBaoHangNgayServer() {
+      if (!await yeuCauQuyen()) return;
 
       const timeVal = document.getElementById('dailyTime').value;
       const dailyMsg = document.getElementById('dailyMsgInput').value.trim() || "Thông báo hằng ngày!";
 
       if (!timeVal) {
-        alert("Vui lòng chọn giờ phút!");
+        alert("Vui lòng chọn giờ & phút!");
         return;
       }
 
-      const [targetHour, targetMinute] = timeVal.split(':').map(Number);
+      const [hours, minutes] = timeVal.split(':').map(Number);
+      const targetTime = new Date();
+      targetTime.setHours(hours, minutes, 0, 0);
 
-      if (dailyTimer) clearInterval(dailyTimer);
-      alert(`Đã đặt lịch nhắc hằng ngày lúc ${timeVal}! Hãy giữ ứng dụng hoạt động.`);
-
-      dailyTimer = setInterval(() => {
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-
-        if (currentHour === targetHour && currentMinute === targetMinute) {
-          if (dailyTriggeredMin !== currentMinute) {
-            dailyTriggeredMin = currentMinute;
-            phatThongBao("Lịch Nhắc Hằng Ngày ⏰", dailyMsg);
-          }
-        } else {
-          dailyTriggeredMin = -1;
-        }
-      }, 1000);
-    }
-
-    function huydatHangNgay() {
-      if (dailyTimer) {
-        clearInterval(dailyTimer);
-        dailyTimer = null;
-        alert("Đã hủy lịch nhắc hằng ngày!");
+      // Nếu giờ đã trôi qua trong hôm nay, tự động hẹn sang ngày mai
+      if (targetTime.getTime() <= Date.now()) {
+        targetTime.setDate(targetTime.getDate() + 1);
       }
+
+      await guiThongBaoQuaServer("Lịch Nhắc Hằng Ngày ⏰", dailyMsg, targetTime);
     }
   </script>
 
@@ -269,62 +240,15 @@
       width: 100%;
       margin-bottom: 16px;
     }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-      color: #1c1c1e;
-      font-size: 18px;
-    }
-    .form-group {
-      margin-bottom: 12px;
-      text-align: left;
-    }
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #6c6c70;
-      margin-bottom: 6px;
-    }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 15px;
-      border: 1px solid #c7c7cc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      outline: none;
-    }
-    input:focus {
-      border-color: #007aff;
-    }
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-    .row .form-group {
-      flex: 1;
-    }
-    button {
-      padding: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 6px;
-      transition: background-color 0.2s ease;
-    }
-    .btn-toggle {
-      padding: 10px 12px;
-      margin-top: 0;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    h2 { margin-top: 0; text-align: center; color: #1c1c1e; font-size: 18px; }
+    .form-group { margin-bottom: 12px; text-align: left; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #6c6c70; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #c7c7cc; border-radius: 8px; box-sizing: border-box; outline: none; }
+    input:focus { border-color: #007aff; }
+    .row { display: flex; gap: 10px; }
+    .row .form-group { flex: 1; }
+    button { padding: 12px; font-size: 14px; font-weight: 600; color: white; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 6px; transition: background-color 0.2s ease; }
+    .btn-toggle { padding: 10px 12px; margin-top: 0; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     .btn-on { background-color: #007aff; }
     .btn-off { background-color: #8e8e93; }
     .btn-start { background-color: #34c759; }
@@ -336,7 +260,7 @@
 </head>
 <body>
 
-  <!-- CARD 1: CẤU HÌNH THÔNG BÁO TẮC BỤP -->
+  <!-- CARD 1 -->
   <div class="card">
     <h2>1. Gửi Thông Báo Tùy Chỉnh</h2>
     
@@ -371,9 +295,9 @@
     <button class="btn-stop" onclick="dungThongBao()">Dừng lại</button>
   </div>
 
-  <!-- CARD 2: BỘ ĐẾM NGÀY -->
+  <!-- CARD 2 -->
   <div class="card">
-    <h2>2. Bộ Đếm Ngược Ngày</h2>
+    <h2>2. Bộ Đếm Ngược Ngày (Server)</h2>
 
     <div class="form-group">
       <label for="eventName">Tên sự kiện / Mục tiêu</label>
@@ -385,14 +309,12 @@
       <input type="date" id="targetDate">
     </div>
 
-    <button class="btn-purple" onclick="guiThongBaoDemNgay()">Bắn thông báo ngay</button>
-    <button class="btn-start" onclick="batHenGioDemNgay()">Bật báo 6:00 sáng mỗi ngày</button>
-    <button class="btn-stop" onclick="tatHenGioDemNgay()">Tắt báo 6:00 sáng</button>
+    <button class="btn-purple" onclick="batHenGioDemNgayServer()">Hẹn báo 6:00 sáng trên Server</button>
   </div>
 
-  <!-- CARD 3: THÔNG BÁO HẰNG NGÀY -->
+  <!-- CARD 3 -->
   <div class="card">
-    <h2>3. Nhắc Nhở Hằng Ngày</h2>
+    <h2>3. Nhắc Nhở Hằng Ngày (Server)</h2>
 
     <div class="form-group">
       <label for="dailyTime">Chọn giờ & phút phát thông báo</label>
@@ -404,8 +326,7 @@
       <input type="text" id="dailyMsgInput" value="Chúc bạn một ngày mới vui vẻ! ✨">
     </div>
 
-    <button class="btn-orange" onclick="datThongBaoHangNgay()">Bật báo thức hằng ngày</button>
-    <button class="btn-stop" onclick="huydatHangNgay()">Tắt báo thức</button>
+    <button class="btn-orange" onclick="datThongBaoHangNgayServer()">Hẹn giờ báo thức Server</button>
   </div>
 
 </body>
