@@ -25,9 +25,39 @@
     let countdownTimer = null;
     let showNumber = true;
 
-    // Cờ chống lặp thông báo trong cùng 1 phút
     let dailyTriggeredMin = -1;
     let countdownTriggeredMin = -1;
+
+    // --- TỰ ĐỘNG LƯU & KHÔI PHỤC DỮ LIỆU ---
+    const inputIds = [
+      'titleInput', 'messageInput', 'countInput', 'intervalInput',
+      'eventName', 'targetDate', 'dailyTime', 'dailyMsgInput'
+    ];
+
+    function saveFormData() {
+      inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) localStorage.setItem(id, el.value);
+      });
+    }
+
+    function loadFormData() {
+      inputIds.forEach(id => {
+        const savedVal = localStorage.getItem(id);
+        const el = document.getElementById(id);
+        if (savedVal !== null && el) {
+          el.value = savedVal;
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFormData();
+      inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', saveFormData);
+      });
+    });
 
     function toggleShowNumber() {
       showNumber = !showNumber;
@@ -141,7 +171,6 @@
       phatThongBao(`Bộ Đếm Ngày • ${eventName}`, msg);
     }
 
-    // Tự động báo đếm ngược đúng 6:00 sáng
     async function batHenGioDemNgay() {
       const daCoQuyen = await yeuCauQuyen();
       if (!daCoQuyen) return;
@@ -156,7 +185,6 @@
 
       countdownTimer = setInterval(() => {
         const now = new Date();
-        // Kiểm tra đúng 6:00 AM
         if (now.getHours() === 6 && now.getMinutes() === 0) {
           if (countdownTriggeredMin !== now.getMinutes()) {
             countdownTriggeredMin = now.getMinutes();
@@ -176,7 +204,7 @@
       }
     }
 
-    // --- 3. BÁO THỨC HẰNG NGÀY (FIX BỊ BỎ LỠ) ---
+    // --- 3. BÁO THỨC HẰNG NGÀY ---
     async function datThongBaoHangNgay() {
       const daCoQuyen = await yeuCauQuyen();
       if (!daCoQuyen) return;
@@ -192,21 +220,20 @@
       const [targetHour, targetMinute] = timeVal.split(':').map(Number);
 
       if (dailyTimer) clearInterval(dailyTimer);
-      alert(`Đã đặt lịch nhắc hằng ngày lúc ${timeVal}! Hãy giữ tab/ứng dụng mở.`);
+      alert(`Đã đặt lịch nhắc hằng ngày lúc ${timeVal}! Hãy giữ ứng dụng hoạt động.`);
 
       dailyTimer = setInterval(() => {
         const now = new Date();
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
 
-        // So sánh theo Giờ và Phút
         if (currentHour === targetHour && currentMinute === targetMinute) {
           if (dailyTriggeredMin !== currentMinute) {
-            dailyTriggeredMin = currentMinute; // Đánh dấu đã bắn trong phút này
+            dailyTriggeredMin = currentMinute;
             phatThongBao("Lịch Nhắc Hằng Ngày ⏰", dailyMsg);
           }
         } else {
-          dailyTriggeredMin = -1; // Reset cờ khi bước sang phút khác
+          dailyTriggeredMin = -1;
         }
       }, 1000);
     }
