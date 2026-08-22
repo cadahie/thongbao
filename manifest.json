@@ -1,15 +1,25 @@
 {
-  "name": "Thông Báo Giả",
+  "name": "Tùy Chỉnh Thông Báo",
   "short_name": "ThongBao",
+  "description": "Ứng dụng gửi thông báo tùy chỉnh hệ thống",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#f2f2f7",
   "theme_color": "#000000",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/1827/1827504.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1827/1827504.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
