@@ -3,17 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Thông Báo Giả</title>
+  <title>App Notification Demo</title>
 
-  <!-- Thẻ bắt buộc để ẩn Safari trên iOS -->
+  <!-- Thẻ bắt buộc để ẩn Safari trên iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ThongBao">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#000000">
 
-  <!-- Manifest độc lập inline -->
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1827/1827504.png">
   <link rel="manifest" href='data:application/manifest+json,{"name":"ThongBao","short_name":"ThongBao","start_url":".","display":"standalone","background_color":"#000000","theme_color":"#000000"}'>
+
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "33007f12-79f1-4b3b-919e-ee08f6bb4d1f",
+      });
+    });
+
+    // Hàm phát thông báo bằng Service Worker gốc
+    async function phatThongBao(title, message) {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        reg.showNotification(title, {
+          body: message,
+          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png"
+        });
+      } else {
+        new Notification(title, { body: message });
+      }
+    }
+
+    // 1. Gửi 10 thông báo (1s/lần)
+    function gui10ThongBao() {
+      let count = 1;
+      phatThongBao("Thông báo đếm số", `Lần gửi thứ ${count}/10`);
+
+      const timer = setInterval(() => {
+        count++;
+        if (count <= 10) {
+          phatThongBao("Thông báo đếm số", `Lần gửi thứ ${count}/10`);
+        } else {
+          clearInterval(timer);
+        }
+      }, 1000);
+    }
+
+    // 2. Hẹn giờ 3 giây
+    function henGio3Giay() {
+      phatThongBao("Hệ thống", "3 giây sau sẽ có thông báo...");
+      setTimeout(() => {
+        phatThongBao("Thử thành công", "Thử thành công!");
+      }, 3000);
+    }
+  </script>
 
   <style>
     :root {
@@ -22,8 +68,8 @@
       --card-border: rgba(255, 255, 255, 0.12);
       --text-main: #ffffff;
       --text-sub: rgba(255, 255, 255, 0.6);
+      --accent-green: #30d158;
       --accent-blue: #0a84ff;
-      --accent-red: #ff453a;
     }
 
     * {
@@ -120,107 +166,20 @@
       color: var(--text-sub);
     }
 
-    .form-section {
-      margin-bottom: 18px;
-    }
-
-    .section-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--text-sub);
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .app-selector {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 6px;
-    }
-
-    .app-card {
-      flex: 0 0 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      cursor: pointer;
-      width: 68px;
-    }
-
-    .app-card svg {
-      width: 32px;
-      height: 32px;
-      margin-bottom: 4px;
-    }
-
-    .app-card span {
-      font-size: 10px;
-      color: var(--text-sub);
-    }
-
-    .app-card.selected {
-      border-color: var(--accent-blue);
-      background: rgba(10, 132, 255, 0.2);
-    }
-
-    .app-card.selected span {
-      color: var(--text-main);
-      font-weight: 600;
-    }
-
-    .input-group {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 6px 12px;
-      margin-bottom: 10px;
-    }
-
-    .input-group label {
-      display: block;
-      font-size: 10px;
-      color: var(--text-sub);
-    }
-
-    .input-group input {
-      width: 100%;
-      background: none;
-      border: none;
-      color: var(--text-main);
-      font-size: 15px;
-      padding: 4px 0;
-      outline: none;
-      user-select: text;
-    }
-
-    .row-inputs {
-      display: flex;
-      gap: 10px;
-    }
-
-    .row-inputs .input-group {
-      flex: 1;
-    }
-
     .btn {
       width: 100%;
-      padding: 14px;
-      border-radius: 12px;
+      padding: 16px;
+      border-radius: 14px;
       font-size: 15px;
       font-weight: 600;
       border: none;
       cursor: pointer;
-      margin-top: 6px;
+      margin-top: 12px;
+      color: white;
     }
 
-    .btn-primary { background: var(--accent-blue); color: white; }
-    .btn-danger { background: rgba(255, 69, 58, 0.2); color: var(--accent-red); border: 1px solid rgba(255, 69, 58, 0.3); }
+    .btn-10s { background-color: var(--accent-green); }
+    .btn-3s { background-color: var(--accent-blue); }
   </style>
 </head>
 <body>
@@ -231,102 +190,24 @@
       <button class="seal-btn" onclick="toggleMenu()">🦭</button>
     </div>
 
-    <!-- VIEW 1: Menu -->
+    <!-- VIEW 1: Menu Trang Chủ -->
     <div class="view-content menu-view active" id="menuView">
       <div class="add-btn-large" onclick="openStudio()">+</div>
-      <div class="menu-hint">Tạo thông báo giả mới</div>
+      <div class="menu-hint">Bấm + để vào bảng điều khiển</div>
     </div>
 
-    <!-- VIEW 2: Cấu hình -->
+    <!-- VIEW 2: Bảng Điều Khiển Gốc -->
     <div class="view-content" id="studioView">
+      <p style="color: var(--text-sub); font-size: 14px;">Chọn tính năng bạn muốn thử nghiệm bên dưới:</p>
       
-      <div class="form-section">
-        <div class="section-label">Chọn ứng dụng</div>
-        <div class="app-selector">
-          
-          <!-- Facebook -->
-          <div class="app-card selected" onclick="selectApp(this, 'Facebook')">
-            <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            <span>Facebook</span>
-          </div>
-
-          <!-- Messenger -->
-          <div class="app-card" onclick="selectApp(this, 'Messenger')">
-            <svg viewBox="0 0 24 24" fill="#0084FF"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.654V24l4.088-2.242c1.082.3 2.23.464 3.443.464 6.627 0 12-4.974 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26 6.559-6.963 3.13 3.259 5.889-3.259-6.56 6.964z"/></svg>
-            <span>Messenger</span>
-          </div>
-
-          <!-- Instagram -->
-          <div class="app-card" onclick="selectApp(this, 'Instagram')">
-            <svg viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-            <span>Instagram</span>
-          </div>
-
-          <!-- TikTok -->
-          <div class="app-card" onclick="selectApp(this, 'TikTok')">
-            <svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.31 1.54-1.3 2.53.01.81.42 1.59 1.08 2.07.72.53 1.66.72 2.54.52 1.11-.22 2.06-1.02 2.45-2.08.23-.62.33-1.28.32-1.94-.01-4.99-.01-9.98-.01-14.97z"/></svg>
-            <span>TikTok</span>
-          </div>
-
-          <!-- Zalo -->
-          <div class="app-card" onclick="selectApp(this, 'Zalo')">
-            <svg viewBox="0 0 24 24" fill="#0068FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            <span>Zalo</span>
-          </div>
-
-          <!-- Discord -->
-          <div class="app-card" onclick="selectApp(this, 'Discord')">
-            <svg viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-            <span>Discord</span>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="section-label">Nội dung hiển thị</div>
-        <div class="input-group">
-          <label>Tên người gửi / Tiêu đề</label>
-          <input type="text" id="senderInput" value="Crush">
-        </div>
-        <div class="input-group">
-          <label>Nội dung tin nhắn</label>
-          <input type="text" id="msgInput" value="Tối nay rảnh không, đi chơi nha! ❤️">
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="section-label">Tần suất & Số lượng</div>
-        <div class="row-inputs">
-          <div class="input-group">
-            <label>Tổng số lượt</label>
-            <input type="number" id="countInput" value="3" min="1">
-          </div>
-          <div class="input-group">
-            <label>Giãn cách (Giây)</label>
-            <input type="number" id="intervalInput" value="2" min="0.5" step="0.5">
-          </div>
-        </div>
-      </div>
-
-      <button class="btn btn-primary" onclick="startFakeNotification()">Bắt đầu gửi</button>
-      <button class="btn btn-danger" onclick="stopNotification()">Dừng lại</button>
-
+      <button class="btn btn-10s" onclick="gui10ThongBao()">Gửi 10 thông báo (1s/lần)</button>
+      <button class="btn btn-3s" onclick="henGio3Giay()">Hẹn giờ thông báo 3 giây</button>
     </div>
   </div>
 
   <script>
-    // Chống Safari nhảy tab khi chạm vào màn hình
+    // Chống Safari nhảy tab PWA
     (function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^http/;a.addEventListener("click",function(a){d=a.target;while(d.nodeName!=="A"&&d.nodeName!=="BODY")d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone");
-
-    let selectedAppName = 'Facebook';
-    let timerId = null;
-
-    function selectApp(element, appName) {
-      document.querySelectorAll('.app-card').forEach(card => card.classList.remove('selected'));
-      element.classList.add('selected');
-      selectedAppName = appName;
-    }
 
     function toggleMenu() {
       const menuView = document.getElementById('menuView');
@@ -342,60 +223,7 @@
     function openStudio() {
       document.getElementById('menuView').classList.remove('active');
       document.getElementById('studioView').classList.add('active');
-      document.getElementById('pageTitle').innerText = 'Thông Báo Giả';
-    }
-
-    async function requestPermission() {
-      if ('Notification' in window) {
-        const perm = await Notification.requestPermission();
-        return perm === 'granted';
-      }
-      return false;
-    }
-
-    function sendNotification(title, body) {
-      new Notification(title, { body });
-    }
-
-    async function startFakeNotification() {
-      const hasPerm = await requestPermission();
-      if (!hasPerm) {
-        alert("Bạn chưa cấp quyền Thông báo cho ứng dụng!");
-        return;
-      }
-
-      const sender = document.getElementById('senderInput').value.trim() || selectedAppName;
-      const message = document.getElementById('msgInput').value.trim() || 'Bạn có thông báo mới';
-      const totalCount = parseInt(document.getElementById('countInput').value) || 1;
-      const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
-
-      const title = `${selectedAppName} • ${sender}`;
-
-      if (timerId) clearInterval(timerId);
-
-      let currentCount = 0;
-      sendNotification(title, message);
-      currentCount++;
-
-      if (totalCount > 1) {
-        timerId = setInterval(() => {
-          if (currentCount < totalCount) {
-            sendNotification(title, message);
-            currentCount++;
-          } else {
-            clearInterval(timerId);
-            timerId = null;
-          }
-        }, intervalSec * 1000);
-      }
-    }
-
-    function stopNotification() {
-      if (timerId) {
-        clearInterval(timerId);
-        timerId = null;
-        alert('Đã dừng tiến trình!');
-      }
+      document.getElementById('pageTitle').innerText = 'Điều khiển Thông báo';
     }
   </script>
 </body>
