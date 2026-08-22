@@ -6,6 +6,7 @@
   <title>Tùy Chỉnh Thông Báo</title>
 
   <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="https://files.catbox.moe/qlht3h.jpeg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ThongBao">
@@ -19,10 +20,9 @@
       });
     });
 
-    let autoTimer = null; // Biến lưu timer để có thể hủy khi cần
-    let showNumber = true; // Trạng thái mặc định: CÓ hiện số thông báo
+    let autoTimer = null;
+    let showNumber = true;
 
-    // Bật/Tắt chế độ hiện số thông báo
     function toggleShowNumber() {
       showNumber = !showNumber;
       const btn = document.getElementById('toggleNumberBtn');
@@ -39,7 +39,6 @@
       }
     }
 
-    // Xin quyền gửi thông báo từ trình duyệt/điện thoại
     async function yeuCauQuyen() {
       if ('Notification' in window) {
         const permission = await Notification.requestPermission();
@@ -53,42 +52,37 @@
       return false;
     }
 
-    // Hàm gửi 1 thông báo thủ công
     async function phatThongBao(title, message) {
+      const iconUrl = "https://files.catbox.moe/qlht3h.jpeg";
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready;
         reg.showNotification(title, {
           body: message,
-          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png",
-          badge: "https://cdn-icons-png.flaticon.com/512/1827/1827504.png"
+          icon: iconUrl,
+          badge: iconUrl
         });
       } else {
-        new Notification(title, { body: message });
+        new Notification(title, { body: message, icon: iconUrl });
       }
     }
 
-    // Hàm khởi chạy thông báo tùy chỉnh dựa vào input người dùng
     async function batDauThongBao() {
       const daCoQuyen = await yeuCauQuyen();
       if (!daCoQuyen) return;
 
-      // Đọc giá trị từ các ô nhập liệu
       const baseTitle = document.getElementById('titleInput').value.trim() || "Thông báo";
       const message = document.getElementById('messageInput').value.trim() || "Nội dung thông báo";
       const countTotal = parseInt(document.getElementById('countInput').value) || 1;
       const intervalSec = parseFloat(document.getElementById('intervalInput').value) || 1;
 
-      // Hủy tiến trình cũ nếu đang chạy
       if (autoTimer) clearInterval(autoTimer);
 
       let currentCount = 1;
 
-      // Tạo tiêu đề dựa theo trạng thái bật/tắt số đếm
       const getFormattedTitle = (index) => {
         return showNumber ? `${baseTitle} (${index}/${countTotal})` : baseTitle;
       };
 
-      // Phát thông báo lần 1 ngay lập tức
       phatThongBao(getFormattedTitle(currentCount), message);
 
       if (countTotal > 1) {
@@ -100,11 +94,10 @@
             clearInterval(autoTimer);
             autoTimer = null;
           }
-        }, intervalSec * 1000); // Đổi từ giây sang mili-giây
+        }, intervalSec * 1000);
       }
     }
 
-    // Hàm dừng gửi thông báo ngay lập tức
     function dungThongBao() {
       if (autoTimer) {
         clearInterval(autoTimer);
@@ -192,16 +185,16 @@
       align-items: center;
     }
     .btn-on {
-      background-color: #007aff; /* Xanh dương */
+      background-color: #007aff;
     }
     .btn-off {
-      background-color: #8e8e93; /* Xám */
+      background-color: #8e8e93;
     }
     .btn-start {
-      background-color: #34c759; /* Màu xanh lá */
+      background-color: #34c759;
     }
     .btn-stop {
-      background-color: #ff3b30; /* Màu đỏ */
+      background-color: #ff3b30;
     }
     button:active {
       opacity: 0.8;
@@ -235,7 +228,6 @@
       </div>
     </div>
 
-    <!-- Nút Bật/Tắt hiển thị số thứ tự thông báo -->
     <button id="toggleNumberBtn" class="btn-toggle btn-on" onclick="toggleShowNumber()">
       <span>Hiện số thứ tự (1/5)</span>
       <strong id="numberStatus">Bật</strong>
